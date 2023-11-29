@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dummy weather app</title>
+    <style>
+        .eachComment {
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 2px solid black;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="/static/vscode_mac.zip">Download VsCode Mac</a>
+    <br>
+    <a href="/static/vision.jpg">Download Image</a>
+
+    <h1>My Dummy Weather App</h1>
+    <form onsubmit="getWeather(); return false">
+        <input type="text" id="cityName" placeholder="enter city name">
+        <button type="submit" class="btn">Get Weather</button>
+    </form>
+    <br>
+    <div id="result"></div>
+
+    <!-- <div id="comments">
+        <h2>Comments</h2>
+        <form id="postCommentForm">
+            <input type="text" id="nameInput" placeholder="Enter your name">
+            <input type="text" id="commentInput" placeholder="Enter your comment here">
+            <button type="submit" class="btn">Post</button>
+        </form>
+        <br>
+        <div id="successMsg"></div>
+        <br>
+        <div id="allComments">
+
+        </div>
+    </div> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="module">
+        window.getWeather = function () {
+            let cityName = document.querySelector("#cityName").value;
+            let result = document.querySelector("#result");
+            console.log(cityName)
+            axios.post(`/weather/`)
+                .then(function (response) {
+                    console.log(response.data)
+                    result.innerHTML = `${response.data.msg}`
+                })
+                .catch(function (error) {
+                    console.log(error.response.data)
+                    result.innerHTML = error.response.data
+                })
+        }
+
+        // document.querySelector("#postCommentForm").addEventListener("submit", async (e) => {
+        //     e.preventDefault()
+        //     let nameInput = document.querySelector("#nameInput").value;
+        //     let commentInput = document.querySelector("#commentInput").value
+        //     try {
+        //         const axiosResponse = await axios.post(`/comment/${nameInput}`, {
+        //             comment: commentInput
+        //         })
+        //         console.log(axiosResponse.data)
+
+        //         document.querySelector("#allComments").innerHTML += `
+        //             <div class="eachComment">
+        //                 <h3>${nameInput}</h3>
+        //                 <p>${commentInput}</p>
+        //                 </div>
+        //             `
+
+        //         document.querySelector("#successMsg").innerHTML = axiosResponse.data.msg
+        //     }
+        //     catch (err) {
+        //         console.log(err)
+        //     }
+        // })
+
+        // const getAllComments = async () => {
+        //     try {
+        //         const axiosResponse = await axios.get("/comments")
+
+        //         console.log(axiosResponse.data) // []
+
+        //         axiosResponse.data.map(eachComment => {
+        //             document.querySelector("#allComments").innerHTML += `
+        //             <div class="eachComment">
+        //                 <h3>${eachComment.name}</h3>
+        //                 <p>${eachComment.comment}</p>
+        //                 </div>
+        //             `
+        //         })
+        //     } catch (err) {
+        //         console.log(err)
+        //     }
+        // }
+        // getAllComments()
+    </script>
+</body>
+
+</html>
