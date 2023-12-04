@@ -1,5 +1,5 @@
 import express from "express";
-import { nanoid } from "nanoid";
+// import { nanoid } from "nanoid";
 import { client } from "../../mongodb.mjs";
 import { ObjectId } from "mongodb";
 
@@ -10,8 +10,8 @@ let router = express.Router()
 
 // GET /api/v1/post/:userId/:postId
 router.get("/post/:postId", async (req, res) => {
-    if (!req.params.postId) {
-        res.status(403).send("post id must be a valid id")
+    if (!ObjectId.isValid(req.params.postId)) {
+        res.status(403).send("Invalid post id")
         return;
     }
 
@@ -44,7 +44,9 @@ router.get("/post/:postId", async (req, res) => {
 
 // GET /api/v1/posts/:userId
 router.get("/posts", async (req, res) => {
-    const cursor = col.find({});
+    const cursor = col.find({})
+        .sort({ _id: -1 })
+        .limit(100);
     try {
         let results = await cursor.toArray();
         // console.log("results", results)
@@ -73,15 +75,16 @@ router.post("/post", async (req, res) => {
 
     let newPost = {
         // _id: "48346932659432659743265" // database will issue this unique id itself
-        id: nanoid(),
         title: req.body.title,
-        text: req.body.text
+        text: req.body.text,
+        createdOn: new Date()
     }
     try {
 
         const insertResponse = await col.insertOne(newPost);
         console.log("insertResponse", insertResponse);
         res.send({ message: "post created" })
+
     } catch (e) {
         console.log("error inserting mongodb: ", e)
         res.send("server error, please try again later")
@@ -93,15 +96,18 @@ router.post("/post", async (req, res) => {
 //     title:"updated title",
 //     text: "updated text"
 // }
-router.put("/post/:postId", (req, res) => {
-    if (!req.params.postId
-        || !req.body.title
-        || !req.body.text
-    ) {
+router.put("/post/:postId", async (req, res) => {
+    if (!ObjectId.isValid(req.params.postId)) {
+        res.status(403).send("Invalid post id")
+        return;
+    }
+
+    if (!req.body.title
+        && !req.body.text) {
         res.status(403).send({
-            message: `example put body:
+            message: `required parameter missing, atleast one is required.
+            example put body:
         {
-            id: postId must be a valid id
             title: req.body.title,
             text: req.body.text
         }`
@@ -109,34 +115,39 @@ router.put("/post/:postId", (req, res) => {
         return;
     }
 
-    for (let i = 0; i < posts.length; i++) {
-        if (posts[i].id === req.params.postId) {
-            posts[i] = {
-                id: req.params.postId,
-                title: req.body.title,
-                text: req.body.text
-            };
-            // res.send({ message: "post updated with id " + req.params.postId })
-            res.send({ message: "post updated" })
-            return;
-        }
+    const dataToBeUpdated = {}
+    if (req.body.title) { dataToBeUpdated.title = req.body.title }
+    if (req.body.text) { dataToBeUpdated.text = req.body.text }
+
+    try {
+        const updateResponse = await col.updateOne({ _id: new ObjectId(req.params.postId) },
+            {
+                $set: dataToBeUpdated
+            }
+        )
+        console.log("updateResponse: ", updateResponse)
+        res.send({ message: "post updated" })
+    } catch (e) {
+        console.log("error updating mongodb: ", e);
+        res.status(500).send("server error, please try later");
     }
-    res.send("post not found with this id " + req.params.postId)
+
 })
 
 // DELETE /api/v1/post/:userId/:postId
-router.delete("/post/:postId", (req, res) => {
-    if (!req.params.postId) {
-        res.status(403).send({ message: "post id must be a valid id" })
+router.delete("/post/:postId", async (req, res) => {
+    if (!ObjectId.isValid(req.params.postId)) {
+        res.status(403).send("Invalid post id")
         return;
     }
 
-    for (let i = 0; i < posts.length; i++) {
-        if (posts[i].id === req.params.postId) {
-            posts.splice(i, 1)
-            res.send({ message: "post deleted with id " + req.params.postId })
-            return;
-        }
+    try {
+        const deleteResponse = await col.deleteOne({ _id: new ObjectId(req.params.postId) })
+        console.log("deleteResponse: ", deleteResponse)
+        res.send({ message: "post deleted" })
+    } catch (e) {
+        console.log("error updating mongodb: ", e);
+        res.status(500).send("server error, please try later");
     }
 })
 

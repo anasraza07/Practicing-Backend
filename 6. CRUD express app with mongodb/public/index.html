@@ -70,11 +70,12 @@
 
                 let postHtml = ``;
                 axiosResponse.data.map(eachPost => {
-                    postHtml += `<div class="eachPost" id="post-${eachPost.id}"> 
-                                <h3> ${eachPost.title}</h3>    
-                                <p> ${eachPost.text}</p>
-                                <button onclick="editPost('${eachPost.id}', '${eachPost.title}', '${eachPost.text}')">Edit</button>
-                                <button onclick="deletePost('${eachPost.id}')">Delete</button>
+                    postHtml += `<div class="eachPost" id="post-${eachPost._id}"> 
+                                <p>${new Date(eachPost.createdOn)}</p>
+                                <h3>${eachPost.title}</h3>    
+                                <p>${eachPost.text}</p>
+                                <button onclick="editPost('${eachPost._id}', '${eachPost.title}', '${eachPost.text}')">Edit</button>
+                                <button onclick="deletePost('${eachPost._id}')">Delete</button>
                                 </div>
                                 <br>`
                 })
