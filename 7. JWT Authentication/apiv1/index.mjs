@@ -1,5 +1,6 @@
 import express from "express";
 let router = express.Router();
+import jwt from "jsonwebtoken";
 
 import authRouter from "./routes/auth.mjs"
 import postRouter from "./routes/post.mjs"
@@ -9,14 +10,25 @@ import feedRouter from "./routes/feed.mjs"
 router.use(authRouter)
 
 router.use((req, res, next) => { // JWT
-    const token = "valid";
-    if (token === "valid") {
+    // console.log("cookies: ", req.cookies)
+
+    const token = req.cookies.token;
+    try {
+        const decoded = jwt.verify(token, process.env.SECRET);
+        // console.log("decoded: ", decoded);
+
+        req.body.decoded = {
+            firstName: decoded.firstName,
+            lastName: decoded.lastName,
+            email: decoded.email,
+            isAdmin: decoded.isAdmin
+        };
+
         next();
-    }
-    else {
-        res.status(401).send(
-            { message: "Invalid token" }
-        )
+
+    } catch (err) {
+        // console.log(err)
+        res.status(401).send({ message: "Invalid token" })
     }
 })
 

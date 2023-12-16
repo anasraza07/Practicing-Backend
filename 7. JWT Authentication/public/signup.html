@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Page</title>
+</head>
+
+<body>
+    <h1>Signup Page</h1>
+    <form id="signupForm">
+        <label for="firstName">First name:</label>
+        <input type="text" id="firstName" required>
+        <br>
+        <label for="lastName">Last name:</label>
+        <input type="text" id="lastName" required>
+        <br>
+        <label for="emailInput">Email:</label>
+        <input type="email" id="emailInput" required>
+        <br>
+        <label for="passwordInput">Password:</label>
+        <input type="password" id="passwordInput" required>
+        <br>
+        <label for="repeatPassword">Repeat password:</label>
+        <input type="password" id="repeatPassword" required>
+        <br>
+        <button type="submit">Signup</button>
+    </form>
+    <p>Already have an account? <a href="./login.html">Login</a></p>
+    <br>
+    <div id="result"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.querySelector("#signupForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const firstName = document.querySelector("#firstName").value;
+            const lastName = document.querySelector("#lastName").value;
+            const emailInput = document.querySelector("#emailInput").value;
+            const passwordInput = document.querySelector("#passwordInput").value;
+            const repeatPassword = document.querySelector("#repeatPassword").value;
+
+            try {
+                if (passwordInput !== repeatPassword) {
+                    // console.log("Password doesn't match!");
+                    document.querySelector("#result").innerHTML = "Password doesn't match!"
+                } else {
+                    const axiosResponse = await axios.post("/api/v1/signup", {
+                        firstName: firstName,
+                        lastName: lastName,
+                        email: emailInput,
+                        password: passwordInput,
+                        repeatPassword: repeatPassword
+                    })
+                    console.log(axiosResponse.data.message)
+                    if (axiosResponse.response.status === 200) {
+                        window.location.href = "/login.html"
+                    }
+                }
+            } catch (e) {
+                console.log(e)
+            }
+        })
+    </script>
+</body>
+
+</html>

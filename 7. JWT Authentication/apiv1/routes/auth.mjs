@@ -1,43 +1,10 @@
 import express from "express";
-// export const router = express.Router()
 let router = express.Router()
 import { client } from "../../mongodb.mjs";
-const userCollection = client.db("cruddb").collection("users")
 import { stringToHash, verifyHash, validateHash } from "bcrypt-inzi";
+import jwt from "jsonwebtoken";
 
-router.post("/login", async (req, res) => {
-    if (!req.body?.email
-        || !req.body?.email) {
-        res.send(`required parameter missing, example request body:
-            {
-                email:some email,
-                password:some password
-        }`)
-        return;
-    }
-
-    try {
-        const result = await userCollection.findOne({ email: req.body.email })
-        console.log("result: ", result)
-
-        if (!result) {
-            res.status(403).send({
-                message: "email or password is incorrect"
-            })
-        } else {
-
-            if (req.body.password === result.password) {
-                res.send({ message: "Login successful" })
-            } else {
-                res.send({ message: "email or password is incorrect" })
-            }
-        }
-
-    } catch (e) {
-        res.send("server error, please try later")
-    }
-
-})
+const userCollection = client.db("cruddb").collection("users")
 
 router.post("/signup", async (req, res) => {
     if (!req.body?.firstName
@@ -54,20 +21,23 @@ router.post("/signup", async (req, res) => {
         return;
     }
 
+    // validate email | optional
     req.body.email = req.body.email.toLowerCase();
 
     try {
         const result = await userCollection.findOne({ email: req.body.email })
         console.log("result: ", result)
+
         if (!result) { // user not found
 
-            const passwordHash = stringToHash(req.body.password)
+            const passwordHash = await stringToHash(req.body.password)
 
             const insertResponse = await userCollection.insertOne({
                 firstName: req.body.firstName,
                 lastName: req.body.lastName,
                 email: req.body.email,
-                password: passwordHash
+                password: passwordHash,
+                createdOn: new Date()
             })
             console.log("insertResponse: ", insertResponse)
             res.send({ message: "Signup successful" });
@@ -83,4 +53,60 @@ router.post("/signup", async (req, res) => {
     }
 })
 
+router.post("/login", async (req, res) => {
+    if (!req.body?.email
+        || !req.body?.email) {
+        res.send(`required parameter missing, example request body:
+            {
+                email:some email,
+                password:some password
+        }`)
+        return;
+    }
+    try {
+        const result = await userCollection.findOne({ email: req.body.email })
+        console.log("result: ", result)
+
+        if (!result) { // user not found
+            res.status(403).send({
+                message: "email or password is incorrect"
+            })
+            return;
+        } else { // user found
+
+            const isMatch = await verifyHash(req.body.password, result.password)
+
+            if (isMatch) {
+                // TODO:  create token for this user
+                const token = jwt.sign({
+                    firstName: result.firstName,
+                    lastName: result.lastName,
+                    email: req.body.email,
+                    isAdmin: false,
+                }, process.env.SECRET, {
+                    expiresIn: '24h'
+                })
+
+                res.cookie('token', token, {
+                    httpOnly: true,
+                    secure: true,
+                    expires: new Date(Date.now() + 86400000)
+                })
+
+                res.send({
+                    message: "Login successful"
+                })
+                return;
+            } else {
+                res.status(401).send({
+                    message: "email or password is incorrect"
+                })
+                return;
+            }
+        }
+    } catch (e) {
+        console.log("error inserting mongodb: ", e)
+        res.status(500).send("server error, please try later")
+    }
+})
 export default router;

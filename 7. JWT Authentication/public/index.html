@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Dummy weather app</title>
+    <title>CRUD App</title>
     <style>
         .eachPost {
             margin-top: 1.5rem;
@@ -24,13 +24,13 @@
 
 <body onload="getAllPosts(); return false;">
     <div id="posts">
-        <h1>My CRUD Application - JavaScript Only</h1>
-        <h2>Creat a post: </h2>
+        <h1>My CRUD Application</h1>
+        <h2>Create a post</h2>
         <form id="publishPostForm">
-            <label for="titleInput">Title: </label>
+            <label for="titleInput">Title:</label>
             <input type="text" id="titleInput" placeholder="Enter your title" required>
             <br>
-            <label for="textInput">Text: </label>
+            <label for="textInput">Text:</label>
             <input type="text" id="textInput" placeholder="Enter some text" required>
             <br>
             <br>
@@ -56,6 +56,7 @@
                 console.log(axiosResponse.data.message)
                 getAllPosts();
                 document.querySelector("#alertMessage").innerHTML = axiosResponse.data.message;
+                document.querySelector("#publishPostForm").reset();
             }
             catch (err) {
                 console.log(err.response.data.message)
@@ -65,7 +66,9 @@
 
         window.getAllPosts = async function () {
             try {
-                const axiosResponse = await axios.get("/api/v1/posts")
+                const axiosResponse = await axios.get("/api/v1/posts", {
+                    withCredentials: true
+                })
                 console.log(axiosResponse.data) // []
 
                 let postHtml = ``;
@@ -82,6 +85,9 @@
                 document.querySelector("#allPosts").innerHTML = postHtml;
             } catch (err) {
                 console.log(err)
+                if (err.response.status === 401) {
+                    window.location.href = "/login.html"
+                }
             }
         }
 
