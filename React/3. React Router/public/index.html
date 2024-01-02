@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dummy weather app</title>
+    <style>
+        .eachPost {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            /* border: 2px solid black; */
+            border-radius: 15px;
+            box-shadow: 0px 0px 10px black;
+
+        }
+
+        .eachPost h3,
+        .eachPost p {
+            margin-top: 12px;
+        }
+    </style>
+</head>
+
+<body onload="getAllPosts(); return false;">
+    <div id="posts">
+        <h1>My CRUD Application - JavaScript Only</h1>
+        <h2>Creat a post: </h2>
+        <form id="publishPostForm">
+            <label for="titleInput">Title: </label>
+            <input type="text" id="titleInput" placeholder="Enter your title" required>
+            <br>
+            <label for="textInput">Text: </label>
+            <input type="text" id="textInput" placeholder="Enter some text" required>
+            <br>
+            <br>
+            <button type="submit" class="btn">Publish Post</button>
+        </form>
+        <br>
+        <div id="alertMessage"></div>
+        <br>
+        <div id="allPosts"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script type="module">
+        document.querySelector("#publishPostForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            let titleInput = document.querySelector("#titleInput").value;
+            let textInput = document.querySelector("#textInput").value;
+            try {
+                const axiosResponse = await axios.post(`/api/v1/post`, {
+                    title: titleInput,
+                    text: textInput
+                })
+                console.log(axiosResponse.data.message)
+                getAllPosts();
+                document.querySelector("#alertMessage").innerHTML = axiosResponse.data.message;
+            }
+            catch (err) {
+                console.log(err.response.data.message)
+                document.querySelector("#alertMessage").innerHTML = err.response.data.message;
+            }
+        })
+
+        window.getAllPosts = async function () {
+            try {
+                const axiosResponse = await axios.get("/api/v1/posts")
+                console.log(axiosResponse.data) // []
+
+                let postHtml = ``;
+                axiosResponse.data.map(eachPost => {
+                    postHtml += `<div class="eachPost" id="post-${eachPost._id}"> 
+                                <p>${new Date(eachPost.createdOn)}</p>
+                                <h3>${eachPost.title}</h3>    
+                                <p>${eachPost.text}</p>
+                                <button onclick="editPost('${eachPost._id}', '${eachPost.title}', '${eachPost.text}')">Edit</button>
+                                <button onclick="deletePost('${eachPost._id}')">Delete</button>
+                                </div>
+                                <br>`
+                })
+                document.querySelector("#allPosts").innerHTML = postHtml;
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
+        window.editPost = async function (postId, title, text) {
+            console.log("postId", postId)
+            try {
+                document.querySelector(`#post-${postId}`).innerHTML = `
+                <form onsubmit="savePost('${postId}')">
+                    <label for="titleInput">title:</label>
+                    <input type="text" id="title-${postId}" value="${title}" required>
+                    <br>
+                    <label for="textInput">text:</label>
+                    <input type="text" id="text-${postId}" value="${text}" required>
+                    <br>
+                    <br>
+                    <button type="submit" class="btn">Save</button>
+                    <button type="button" class="btn" onclick="cancelPost()">Cancel</button>
+                    </form>
+                `
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
+        window.deletePost = async function (postId) {
+            try {
+                const axiosResponse = await axios.delete(`/api/v1/post/${postId}`)
+                console.log(axiosResponse.data);
+                getAllPosts();
+            } catch (err) {
+                console.log(err)
+            }
+        }
+
+        window.savePost = async function (postId) {
+            const updatedTitle = document.querySelector(`#title-${postId}`).value;
+            const updatedText = document.querySelector(`#text-${postId}`).value;
+            try {
+                const axiosResponse = await axios.put(`/api/v1/post/${postId}`, {
+                    title: updatedTitle,
+                    text: updatedText
+                })
+                console.log(axiosResponse.data);
+                // getAllPosts();
+            } catch (err) {
+                console.log(err)
+            }
+        }
+    </script>
+</body>
+
+</html>
